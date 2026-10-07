@@ -1,6 +1,6 @@
 <div align="center">
 
-# calmvoice — Safety-First Voice Wellbeing Companion with Local RAG
+# calmvoice — Safety-First Voice Wellbeing Companion With Local RAG
 
 **calmvoice is a wellbeing support companion for people who want general coping information by text or voice. It takes a message through these steps to a cited, checked reply:**
 
@@ -9,7 +9,7 @@
 ![Safety rules](https://img.shields.io/badge/Safety_rules-27-1F3864?style=for-the-badge)
 ![Crisis recall](https://img.shields.io/badge/Crisis_recall-0.88_synthetic-2E5FD9?style=for-the-badge)
 ![CLI commands](https://img.shields.io/badge/CLI_commands-9-6E86E8?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-81_passing-3DA35B?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-80_passing-3DA35B?style=for-the-badge)
 ![Offline demo](https://img.shields.io/badge/Offline_demo-Yes-F5C542?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-A0399B?style=for-the-badge)
 
@@ -116,7 +116,7 @@ calmvoice gives each of these questions its own component. Each component has a 
 | Providers | Ollama (local LLM), sentence-transformers MiniLM, faster-whisper, gTTS, FAISS. All are optional |
 | Offline mode | Hashing embedder, BM25, rule rewriter, extractive generator and tone TTS. No key and no network |
 | Safety | The safety gate runs first. A crisis message gets the escalation message and never reaches the LLM |
-| Tests | **81** unit tests (`pytest`). In CI, 80 pass and 1 skips (FAISS is not in the `dev` extra) |
+| Tests | **80** unit tests pass in CI (`pytest`), 1 skips without the `faiss` extra. With the extra: 81 pass |
 
 ```mermaid
 flowchart LR
@@ -179,7 +179,7 @@ calmvoice/
 │   ├── retrieval.py             # rewriters, RRF, hybrid retriever
 │   ├── companion.py             # the pipeline
 │   └── ...                      # the other modules in 2.1
-├── tests/                       # 81 unit tests, no network
+├── tests/                       # 81 unit tests, no network (1 needs FAISS)
 ├── .env.example                 # variable names only
 └── pyproject.toml               # core deps: numpy, pydantic. Extras: embeddings, faiss, voice, ui, ml, dev
 ```
@@ -548,7 +548,8 @@ All numbers come from the commands in the table, on the bundled corpus and the s
 
 | Validation | Result | Command |
 |---|---|---|
-| Unit tests | **81 passed** (local). Expected CI: 80 passed, 1 skipped (FAISS) | `pytest -q` |
+| Unit tests (CI installs only `.[dev]`) | **80 passed, 1 skipped** (the FAISS test) | `pytest -q` |
+| Unit tests with the `faiss` extra | **81 passed** | `pytest -q` |
 | Red-team set | 145 synthetic messages: 73 `crisis`, 24 `concern`, 48 `none` | `calmvoice eval-safety` |
 | Crisis recall, rules | **0.877** (64 of 73), 95 % Wilson CI 0.782 to 0.934 | `calmvoice eval-safety` |
 | Crisis precision, rules | 1.000 | `calmvoice eval-safety` |
@@ -600,7 +601,7 @@ Read these problems before you use calmvoice in production.
 2. **The knowledge is licensed and curated.** The schema rejects personal posts and text without a reuse licence.
 3. **Fusion is real.** Each query variant gives a dense list and a BM25 list, and RRF fuses all of them.
 4. **Voice uses bytes, not devices.** The browser records and plays. The server only changes bytes.
-5. **Everything runs offline.** The demo and the 81 tests need no key and no network.
+5. **Everything runs offline.** The demo and the unit tests need no key and no network.
 6. **The numbers are honest.** The README gives the misses of the rules and the weak classifier result.
 
 ---
