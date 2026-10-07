@@ -1,0 +1,28 @@
+{"query": "my heart pounds and my hands shake, am I going to be ok", "relevant": ["panic-body"]}
+{"query": "what can I do to calm down quickly when stress hits", "relevant": ["slow-breathing", "grounding-senses"]}
+{"query": "how do I breathe to relax", "relevant": ["slow-breathing"]}
+{"query": "my thoughts are racing and I feel unreal, how do I come back to the present", "relevant": ["grounding-senses"]}
+{"query": "I worry all day long and cannot stop", "relevant": ["worry-time"]}
+{"query": "I lie awake for hours and cannot fall asleep", "relevant": ["sleep-habits", "racing-thoughts-night"]}
+{"query": "should I drink coffee in the evening if I sleep badly", "relevant": ["sleep-habits"]}
+{"query": "my mind will not switch off at bedtime", "relevant": ["racing-thoughts-night"]}
+{"query": "I have no motivation to do anything and stay in bed", "relevant": ["behavioural-activation"]}
+{"query": "I feel down and stopped doing things I used to enjoy", "relevant": ["behavioural-activation"]}
+{"query": "I always think the worst will happen", "relevant": ["unhelpful-thoughts"]}
+{"query": "I call myself a failure all the time", "relevant": ["unhelpful-thoughts", "self-compassion"]}
+{"query": "I am too hard on myself when I make mistakes", "relevant": ["self-compassion"]}
+{"query": "too many deadlines at work and I am overwhelmed", "relevant": ["stress-workload"]}
+{"query": "exams are coming and I have too much to study", "relevant": ["stress-workload"]}
+{"query": "does exercise help with mood", "relevant": ["physical-activity"]}
+{"query": "is a short walk enough to feel better", "relevant": ["physical-activity"]}
+{"query": "I feel lonely and isolated since I moved", "relevant": ["social-connection"]}
+{"query": "how can I reconnect with friends when I feel low", "relevant": ["social-connection"]}
+{"query": "when should I see a doctor about my mood", "relevant": ["when-to-get-help"]}
+{"query": "how long is too long to feel this anxious before getting help", "relevant": ["when-to-get-help"]}
+{"query": "what happens in therapy", "relevant": ["talking-therapies"]}
+{"query": "what is CBT and how does counselling work", "relevant": ["talking-therapies"]}
+{"query": "I feel nervous all the time", "relevant": ["worry-time", "grounding-senses", "slow-breathing"]}
+{"query": "I am exhausted because I cannot sleep and work is piling up", "relevant": ["sleep-habits", "stress-workload"]}
+{"query": "fear comes suddenly with tight breathing and tingling", "relevant": ["panic-body"]}
+{"query": "how do I write down and challenge negative thinking", "relevant": ["unhelpful-thoughts"]}
+{"query": "how to be kinder to myself", "relevant": ["self-compassion"]}

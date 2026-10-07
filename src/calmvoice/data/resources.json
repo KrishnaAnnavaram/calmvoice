@@ -1,0 +1,48 @@
+{
+  "checked": "2026-10",
+  "note": "Check each number with the official service before a deployment. Numbers change.",
+  "regions": {
+    "US": {
+      "emergency": "911",
+      "lines": [
+        {"name": "988 Suicide & Crisis Lifeline", "contact": "Call or text 988", "url": "https://988lifeline.org"}
+      ]
+    },
+    "CA": {
+      "emergency": "911",
+      "lines": [
+        {"name": "9-8-8 Suicide Crisis Helpline", "contact": "Call or text 988", "url": "https://988.ca"}
+      ]
+    },
+    "GB": {
+      "emergency": "999",
+      "lines": [
+        {"name": "Samaritans", "contact": "Call 116 123", "url": "https://www.samaritans.org"}
+      ]
+    },
+    "IE": {
+      "emergency": "112 or 999",
+      "lines": [
+        {"name": "Samaritans Ireland", "contact": "Call 116 123", "url": "https://www.samaritans.org/ireland"}
+      ]
+    },
+    "AU": {
+      "emergency": "000",
+      "lines": [
+        {"name": "Lifeline Australia", "contact": "Call 13 11 14", "url": "https://www.lifeline.org.au"}
+      ]
+    },
+    "IN": {
+      "emergency": "112",
+      "lines": [
+        {"name": "Tele-MANAS", "contact": "Call 14416", "url": "https://telemanas.mohfw.gov.in"}
+      ]
+    },
+    "DEFAULT": {
+      "emergency": "your local emergency number",
+      "lines": [
+        {"name": "Find A Helpline (international directory)", "contact": "Search by country", "url": "https://findahelpline.com"}
+      ]
+    }
+  }
+}

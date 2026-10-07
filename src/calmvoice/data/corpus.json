@@ -1,0 +1,132 @@
+{
+  "corpus_id": "calmvoice-demo",
+  "version": "2026.10.1",
+  "documents": [
+    {
+      "doc_id": "slow-breathing",
+      "title": "Slow breathing for moments of stress",
+      "topic": "stress",
+      "content_type": "self-help-exercise",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "When the body reacts to stress, breathing often becomes fast and shallow. Slow breathing can send a signal of safety to the nervous system. Sit or stand in a comfortable position and put one hand on your stomach. Breathe in through the nose for a count of four, and let the stomach rise. Breathe out gently through the mouth for a count of six. A longer out-breath than in-breath is the important part. Repeat this for two to five minutes. If you feel dizzy, return to normal breathing. Many people find it easier to practise slow breathing at calm times first, so that the skill is ready when stress arrives."
+    },
+    {
+      "doc_id": "grounding-senses",
+      "title": "Grounding with the five senses",
+      "topic": "anxiety",
+      "content_type": "self-help-exercise",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Grounding moves attention away from racing thoughts and back to the present moment. One common exercise uses the five senses. Name five things that you can see around you. Name four things that you can touch, and notice their texture. Name three things that you can hear. Name two things that you can smell, and one thing that you can taste. Say the names slowly, aloud or in your head. Grounding does not remove anxious feelings, but it can make them smaller and easier to ride out. It is useful during worry spirals and when feelings of unreality appear."
+    },
+    {
+      "doc_id": "panic-body",
+      "title": "What happens in the body during panic",
+      "topic": "anxiety",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "A panic attack is a sudden wave of intense fear with strong body sensations. The heart can pound, breathing can feel tight, and hands can tingle or shake. These sensations come from the fight-or-flight response, which prepares the body for danger. The response is uncomfortable but it is not harmful by itself, and it usually peaks within ten minutes. Fighting the sensations often makes them stronger. Many people find it helps to name the experience as panic, to breathe slowly, and to let the wave pass. Chest pain or breathing problems that are new or severe need a medical check, because other conditions can cause them."
+    },
+    {
+      "doc_id": "worry-time",
+      "title": "Scheduled worry time",
+      "topic": "anxiety",
+      "content_type": "self-help-exercise",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Worry can fill the whole day when it has no limits. Scheduled worry time gives worry a fixed place. Choose fifteen minutes at the same time each day, not close to bedtime. When a worry appears outside that time, write it down in a few words and tell yourself that you will come back to it later. During worry time, read the list. For each worry, ask if you can do something about it. If you can, write one small next step. If you cannot, practise letting it go. After some days, many people notice that worries feel less urgent when they return to them."
+    },
+    {
+      "doc_id": "sleep-habits",
+      "title": "Habits that support sleep",
+      "topic": "sleep",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Sleep and mood affect each other. Poor sleep can make stress and low mood worse, and worry can keep you awake. Regular habits help the body clock. Get up at about the same time every day, also at weekends. Keep the bedroom dark, quiet and cool. Avoid caffeine in the afternoon and evening, and keep screens away for the last hour before bed. If you lie awake for a long time, get up, do something calm in dim light, and return to bed when you feel sleepy. Sleep problems that last for weeks are a good reason to talk to a doctor."
+    },
+    {
+      "doc_id": "racing-thoughts-night",
+      "title": "When thoughts race at night",
+      "topic": "sleep",
+      "content_type": "self-help-exercise",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Racing thoughts at bedtime are common after a busy or difficult day. A short wind-down routine can help the mind slow down. About an hour before bed, write down tomorrow's tasks so that the brain does not need to hold them. Then write two or three things from the day that went well, even small ones. In bed, try a body scan: move attention slowly from the feet to the head, and notice each part without judgement. If a thought appears, label it as thinking and return to the body. The aim is rest, not forced sleep."
+    },
+    {
+      "doc_id": "behavioural-activation",
+      "title": "Small activities when mood is low",
+      "topic": "low-mood",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Low mood often reduces energy and motivation, so people do fewer activities. Doing less then removes sources of pleasure and achievement, and mood can drop further. Behavioural activation breaks this cycle. Make a list of small activities that used to give you a sense of pleasure, connection or achievement. Choose one that is easy, such as a short walk, a shower, or a message to a friend. Plan when you will do it, and do it even if motivation is low. Motivation often follows action. Notice how you feel afterwards and slowly add more activities."
+    },
+    {
+      "doc_id": "unhelpful-thoughts",
+      "title": "Noticing unhelpful thoughts",
+      "topic": "low-mood",
+      "content_type": "self-help-exercise",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Thoughts are not always facts. When we feel low or anxious, the mind can jump to the worst outcome, ignore the positive, or use harsh labels such as failure. A thought record helps you to notice this. Write down the situation, the feeling and its strength from zero to one hundred, and the thought that went through your mind. Then write the evidence for the thought and the evidence against it. Finally, write a more balanced thought that a kind friend could say. Rate the feeling again. The goal is not forced positive thinking but a fair view."
+    },
+    {
+      "doc_id": "self-compassion",
+      "title": "Treating yourself with kindness",
+      "topic": "coping",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Many people speak to themselves more harshly than they would ever speak to a friend. Self-criticism can feel motivating, but it often increases shame and stress. Self-compassion means noticing your pain, remembering that difficulty is part of being human, and answering yourself with kindness. When you make a mistake, try to ask what you would say to a friend in the same situation. Put a hand on your chest and use a warm, calm voice in your head. Self-compassion is a skill, and it grows with practice."
+    },
+    {
+      "doc_id": "stress-workload",
+      "title": "Managing a heavy workload",
+      "topic": "stress",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "A heavy workload at work or study is a frequent cause of stress. Stress becomes a problem when demands stay higher than resources for a long time. Start by writing every task in one list, so that nothing needs to stay in your head. Mark what is urgent and what is important. Break large tasks into steps that take less than an hour. Plan short breaks, because attention drops after long periods of focus. Say no or ask for more time when that is possible. Keep sleep, food and movement regular, because they are the base for coping with pressure."
+    },
+    {
+      "doc_id": "physical-activity",
+      "title": "Movement and mood",
+      "topic": "coping",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Physical activity can lift mood, reduce tension and improve sleep. It does not need to be intense or long. A ten-minute walk outdoors, stretching, dancing in the kitchen or cycling to the shop all count. Regular movement on most days is more helpful than a hard workout once a week. Choose something that you enjoy, because enjoyment makes it easier to continue. If you have a health condition, ask a doctor which activities are safe for you."
+    },
+    {
+      "doc_id": "social-connection",
+      "title": "Staying connected with other people",
+      "topic": "relationships",
+      "content_type": "psychoeducation",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Feeling lonely is painful and common. Social connection protects mental health, and even short contacts matter. Send a message to one person you trust, join a group around an interest, or have a brief chat with a neighbour. When you feel low, it is normal to want to withdraw, but small steps towards people often help. You do not need to talk about problems every time. Shared activities and ordinary conversation also build connection. If talking feels hard, start with a written message."
+    },
+    {
+      "doc_id": "when-to-get-help",
+      "title": "When to talk to a professional",
+      "topic": "help-seeking",
+      "content_type": "service-information",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Self-help can be useful, but some situations need professional support. Talk to a doctor or a mental health professional if low mood, anxiety or stress last for more than two weeks, if they stop you from working, studying or caring for yourself, or if you use alcohol or drugs to cope. A family doctor is often a good first contact and can refer you to talking therapies. If you have thoughts of ending your life or of harming yourself or someone else, contact a crisis line or emergency services now. Asking for help is a sign of strength."
+    },
+    {
+      "doc_id": "talking-therapies",
+      "title": "What talking therapies are",
+      "topic": "help-seeking",
+      "content_type": "service-information",
+      "source": "calmvoice demo corpus (author-written)",
+      "license": "CC0-1.0",
+      "text": "Talking therapies are treatments in which you work with a trained therapist on your thoughts, feelings and behaviour. Cognitive behavioural therapy looks at the links between thoughts, feelings and actions. Other forms focus on relationships, on acceptance, or on past experiences. Therapy can be one to one, in a group or online. A first meeting usually includes questions about what brings you, so that the therapist can suggest a plan. It is fine to ask about the approach, the number of sessions and confidentiality."
+    }
+  ]
+}
