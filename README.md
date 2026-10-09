@@ -280,25 +280,37 @@ The server never opens a microphone or a speaker. `voice.py` receives audio byte
 ### 4.1 Full flow
 
 ```mermaid
-flowchart TB
-    M["Message (text or transcript)"] --> G{"Safety gate"}
-    G -- "crisis" --> E["Escalation message + crisis lines"]
+flowchart TD
+    MIC[/"Browser audio"/] --> STT["Speech to text"]
+    STT --> M
+    M[/"Message (text or transcript)"/] --> G{"Safety gate"}
+    G -- "crisis" --> E[/"Escalation message + crisis lines"/]
+    E --> HUMAN{{"HUMAN<br/>crisis line or emergency service"}}
     G -- "none or concern" --> S{"Scope limit"}
     S -- "diagnosis or medication" --> RF["Scope-limit reply"]
     S -- "in scope" --> RW["Rewriter: query variants"]
+    IDX[("Dense index and chunks<br/>CALMVOICE_INDEX_DIR")] --> DN
+    IDX --> BM
     RW --> DN["Dense search for each variant"]
     RW --> BM["BM25 search for each variant"]
     DN --> F["RRF, max 1 chunk for each document"]
     BM --> F
     F --> GEN["Generator: LLM or extractive"]
+    MEM[("Session memory")] --> GEN
     GEN --> OG{"Output guard"}
     OG -- "diagnosis or medication" --> BL["Safe fallback text"]
     OG -- "pass" --> A["Answer with citations"]
+    RF --> C
+    BL --> C
     A --> C{"Risk level concern?"}
     C -- "yes" --> CA["Add check-in and crisis lines"]
     C -- "no" --> R["Reply"]
     CA --> R
-    R --> T["TTS bytes to the browser"]
+    R -.->|"memory.add"| MEM
+    R --> T[/"TTS bytes to the browser"/]
+
+    classDef human fill:#fff3cd,stroke:#b8901f,color:#3d2f00,font-weight:bold
+    class HUMAN human
 ```
 
 ### 4.2 The life cycle of one message
