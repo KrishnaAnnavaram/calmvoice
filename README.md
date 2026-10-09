@@ -76,6 +76,7 @@ This README is the **one location that explains all of calmvoice**. It gives the
 4. 🔄 [The end-to-end workflow](#4-the-end-to-end-workflow)
    - 4.1 [Full flow](#41-full-flow)
    - 4.2 [The life cycle of one message](#42-the-life-cycle-of-one-message)
+   - 4.3 [Who does which step](#43-who-does-which-step)
 5. 🔵 [The safety gate](#5-the-safety-gate)
 6. 🟢 [The corpus, the chunks and the index](#6-the-corpus-the-chunks-and-the-index)
 7. 🟣 [Retrieval, generation and voice](#7-retrieval-generation-and-voice)
@@ -152,6 +153,69 @@ flowchart LR
 | CLI | `src/calmvoice/cli.py` | The `calmvoice` command with 9 subcommands |
 | Streamlit page | `src/calmvoice/app/streamlit_app.py` | Browser microphone, audio playback, session state |
 | Package data | `src/calmvoice/data/` | `corpus.json`, `resources.json`, `retrieval_eval.jsonl` |
+
+The component map shows which module calls which module. An arrow points from the caller to the module that it uses.
+
+```mermaid
+flowchart TB
+    subgraph ENTRY["Entry points"]
+        CLI["cli.py<br/>calmvoice command"]
+        APP["streamlit_app.py<br/>browser page"]
+    end
+    CFG["config.py<br/>Settings.from_env"]
+    COMP["companion.py<br/>build_companion, Companion.respond"]
+    MEM["memory.py<br/>SessionMemory"]
+    VOI["voice.py<br/>STT and TTS adapters"]
+    subgraph SAFE["Safety"]
+        SAF["safety.py<br/>SafetyGate, check_scope, guard_output"]
+        SML["safety_model.py<br/>LearnedRiskClassifier, optional"]
+    end
+    subgraph KNOW["Knowledge and retrieval"]
+        COR["corpus.py<br/>load_corpus, fingerprint"]
+        IDX["index.py<br/>load_or_build, DenseIndex"]
+        CHK["chunking.py<br/>chunk_corpus"]
+        EMB["embeddings.py<br/>HashingEmbedder, MiniLMEmbedder"]
+        RET["retrieval.py<br/>Retriever, rewriters, RRF"]
+        LEX["lexical.py<br/>BM25"]
+        TXT["textutil.py<br/>content_tokens, stem"]
+    end
+    subgraph GENG["Generation"]
+        GEN["generation.py<br/>LLMGenerator, ExtractiveGenerator"]
+        LLM["llm.py<br/>OllamaLLM"]
+    end
+    subgraph EVALG["Evaluation"]
+        EVA["evaluation.py<br/>safety, retrieval, answers"]
+        SYN["synthetic.py<br/>make_redteam"]
+    end
+
+    CLI --> CFG
+    CLI --> COMP
+    CLI -- "build-index" --> IDX
+    CLI -- "eval commands" --> EVA
+    CLI -- "redteam" --> SYN
+    CLI -- "eval-safety --with-classifier" --> SML
+    APP --> CFG
+    APP --> COMP
+    APP --> VOI
+    APP --> MEM
+    COMP --> SAF
+    COMP --> COR
+    COMP --> IDX
+    COMP --> RET
+    COMP --> GEN
+    COMP --> LLM
+    COMP --> MEM
+    IDX --> CHK
+    IDX --> EMB
+    RET --> EMB
+    RET --> LEX
+    EMB --> TXT
+    LEX --> TXT
+    GEN --> LLM
+    EVA --> RET
+    EVA --> SAF
+    SML --> SYN
+```
 
 ### 2.2 System context
 
@@ -239,6 +303,41 @@ flowchart TB
 
 ### 4.2 The life cycle of one message
 
+```mermaid
+stateDiagram-v2
+    state "Message text" as Text
+    state "Risk assessed" as Assessed
+    state "In scope" as InScope
+    state "Chunks retrieved" as Retrieved
+    state "Draft text" as Draft
+    state "Guarded text" as Guarded
+    state "Check-in and crisis lines added" as Concern
+    state "Turn stored, if memory is on" as Stored
+    state "Audio bytes" as Spoken
+    [*] --> Text: typed, or transcribed by the STT adapter
+    Text --> empty: message is empty
+    Text --> Assessed: SafetyGate.assess
+    Assessed --> crisis: risk level crisis, escalation message
+    Assessed --> out_of_scope: check_scope finds medication or diagnosis
+    Assessed --> InScope: check_scope passes
+    InScope --> Retrieved: Retriever.retrieve, top_k chunks
+    Retrieved --> Draft: generator, extractive fallback on LLMError
+    Draft --> Guarded: guard_output
+    Guarded --> blocked: diagnosis or medication advice
+    Guarded --> answer: pass, invalid citations removed
+    out_of_scope --> Concern: risk level concern
+    blocked --> Concern: risk level concern
+    answer --> Concern: risk level concern
+    crisis --> Stored: memory.add
+    out_of_scope --> Stored: risk level none
+    blocked --> Stored: risk level none
+    answer --> Stored: risk level none
+    Concern --> Stored: memory.add
+    Stored --> Spoken: the page synthesizes the reply
+    Spoken --> [*]
+    empty --> [*]
+```
+
 1. The browser sends text, or audio bytes that the STT adapter transcribes.
 2. The safety gate assesses the message and gives a risk level.
 3. If the risk level is `crisis`, the companion returns the escalation message and stops.
@@ -252,11 +351,73 @@ flowchart TB
 11. If session memory is on, the companion stores the turn in memory.
 12. The TTS adapter changes the reply text into audio bytes for the browser.
 
+### 4.3 Who does which step
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User in the browser
+    participant PG as Streamlit page
+    participant STT as WhisperSTT
+    participant CO as Companion
+    participant SG as SafetyGate
+    participant RT as Retriever
+    participant LLM as OllamaLLM
+    participant TTS as GTTSTextToSpeech or ToneTTS
+
+    U->>PG: record audio with st.audio_input
+    PG->>STT: transcribe(Audio bytes)
+    STT-->>PG: transcript
+    PG->>CO: respond(message)
+    CO->>SG: assess(message)
+    SG-->>CO: RiskAssessment
+    alt risk level crisis
+        CO-->>PG: Reply, route crisis, escalation message
+    else check_scope finds medication or diagnosis
+        CO-->>PG: Reply, route out_of_scope
+    else in scope
+        CO->>RT: retrieve(message, top_k)
+        RT-->>CO: Retrieved chunks
+        opt CALMVOICE_LLM is ollama
+            CO->>LLM: POST /api/chat with policy, sources, history
+            LLM-->>CO: draft text, or LLMError
+        end
+        CO->>CO: ExtractiveGenerator if offline or on LLMError
+        CO->>CO: guard_output, concern check-in, memory.add
+        CO-->>PG: Reply, route answer or blocked, sources
+    end
+    PG->>TTS: synthesize(reply text)
+    TTS-->>PG: audio bytes
+    PG-->>U: st.audio plays the bytes
+```
+
 ---
 
 ## 5. The safety gate
 
 **Purpose.** Find a message that needs human help before any generated text goes to the user.
+
+```mermaid
+flowchart TD
+    IN[/"Message"/] --> NORM["normalise: straight apostrophes,<br/>single spaces"]
+    NORM --> RULES["RuleDetector: search with 27 rules,<br/>17 crisis and 10 concern"]
+    RULES --> LV["Rule level: highest level of the matched rules,<br/>with categories and matches"]
+    LV --> CLS{"Classifier attached?"}
+    CLS -- "no, default" --> OUT[/"RiskAssessment, source rules"/]
+    CLS -- "yes" --> PRED["LearnedRiskClassifier.predict_level:<br/>crisis if the probability is 0.35 or more"]
+    PRED --> HIGH{"Classifier level higher<br/>than the rule level?"}
+    HIGH -- "yes" --> OUTC[/"RiskAssessment with the classifier level,<br/>source classifier"/]
+    HIGH -- "no" --> OUT
+    OUT --> ACT{"Risk level"}
+    OUTC --> ACT
+    ACT -- "crisis" --> ESC[/"Escalation message only,<br/>no retrieval, no LLM"/]
+    ACT -- "concern" --> CHKIN[/"Answer, plus a check-in<br/>and the crisis lines"/]
+    ACT -- "none" --> NRM[/"Normal answer"/]
+    ESC --> HUMAN{{"HUMAN<br/>crisis line or emergency service"}}
+
+    classDef human fill:#fff3cd,stroke:#b8901f,color:#3d2f00,font-weight:bold
+    class HUMAN human
+```
 
 | Input | Output |
 |---|---|
@@ -278,6 +439,27 @@ flowchart TB
 - The escalation message has three forms: for harm to others, for abuse and for all other crisis categories.
 - `resources.json` has crisis lines for `US`, `CA`, `GB` (also `UK`), `IE`, `AU`, `IN` and a `DEFAULT` directory.
 
+The diagram shows how `load_resources` and `escalation_message` make the escalation message.
+
+```mermaid
+flowchart TD
+    REG[/"Region: --region,<br/>else CALMVOICE_REGION, default US"/] --> UP["Upper case, UK becomes GB"]
+    UP --> KNOWN{"Region in resources.json?"}
+    KNOWN -- "yes" --> LINES["Emergency number and<br/>crisis lines of the region"]
+    LINES --> ADD["Add the DEFAULT directory line"]
+    KNOWN -- "no" --> DEF["DEFAULT entry:<br/>Find A Helpline directory"]
+    ADD --> RES[/"RegionResources"/]
+    DEF --> RES
+    CATS[/"Crisis categories of the message"/] --> FORM{"Category present"}
+    FORM -- "harm_to_others" --> O1["Opening: move away,<br/>contact help now"]
+    FORM -- "abuse, no harm_to_others" --> O2["Opening: you deserve to be safe,<br/>go to a safe place"]
+    FORM -- "other crisis categories" --> O3["Opening: your safety matters"]
+    O1 --> MSG[/"Escalation message: opening, format_resources,<br/>not a counsellor statement"/]
+    O2 --> MSG
+    O3 --> MSG
+    RES --> MSG
+```
+
 | Region | Emergency | Crisis line |
 |---|---|---|
 | `US` | 911 | 988 Suicide & Crisis Lifeline, call or text 988 |
@@ -297,6 +479,22 @@ The crisis lines were correct in October 2026. Check each number with the offici
 ## 6. The corpus, the chunks and the index
 
 **Purpose.** Keep a small, licensed corpus and a persisted index that the companion loads on each start.
+
+```mermaid
+flowchart TD
+    SRC[/"Corpus JSON: CALMVOICE_CORPUS,<br/>else the bundled corpus.json"/] --> VAL{"Corpus schema valid?<br/>licence allow-list, no extra fields,<br/>unique doc_id"}
+    VAL -- "no" --> ERR[/"ValidationError"/]
+    VAL -- "yes" --> FP["fingerprint: SHA-256 of the documents,<br/>first 16 hex digits"]
+    FP --> CUR{"is_current: same fingerprint, embedder,<br/>max_chars and overlap in index_meta.json?"}
+    STORE[("CALMVOICE_INDEX_DIR: vectors.npy,<br/>chunks.json, index_meta.json")] --> CUR
+    CUR -- "yes" --> LOAD["DenseIndex.load"]
+    CUR -- "no" --> CH["chunk_corpus: max 420 characters,<br/>1 sentence of overlap"]
+    CH --> EMB["embedder.embed: title and text<br/>of each chunk"]
+    EMB --> SAVE["DenseIndex.save,<br/>only if an index folder is given"]
+    SAVE --> STORE
+    LOAD --> IDX[/"DenseIndex"/]
+    SAVE --> IDX
+```
 
 | Input | Output |
 |---|---|
@@ -318,7 +516,38 @@ The crisis lines were correct in October 2026. Check each number with the offici
 - A sentence longer than the limit becomes one chunk. The chunker does not cut a sentence.
 - `HashingEmbedder` uses `crc32` feature hashing of stemmed words, word bigrams and character trigrams (1024 dimensions). The vectors are the same in each process.
 - `MiniLMEmbedder` uses `sentence-transformers/all-MiniLM-L6-v2` (extra `embeddings`).
-- The default backend is NumPy. The `faiss` backend uses `IndexFlatIP` (extra `faiss`).
+- The default backend is NumPy. The `faiss` backend uses `IndexFlatIP` (extra `faiss`). The CLI and the Streamlit page always use NumPy. Only the Python API (`load_or_build(..., backend="faiss")`) selects FAISS.
+
+The diagram shows how `chunk_document` packs whole sentences into chunks.
+
+```mermaid
+flowchart TD
+    DOC[/"One document text"/] --> SPANS["sentence_spans: split after . ! or ?<br/>before a capital, a digit or a quote"]
+    SPANS --> START["Start a chunk at sentence i"]
+    START --> GROW{"Next sentence fits:<br/>420 characters or less from the start?"}
+    GROW -- "yes" --> ADDS["Add the next sentence"]
+    ADDS --> GROW
+    GROW -- "no, or a long sentence alone" --> CUT["Chunk: exact slice of the text,<br/>doc_id, title, topic, start, end"]
+    CUT --> LAST{"Last sentence used?"}
+    LAST -- "no" --> NEXT["Next start: last sentence minus<br/>the overlap, at least i + 1"]
+    NEXT --> START
+    LAST -- "yes" --> OUT[/"Chunks of the document"/]
+```
+
+The diagram shows how `HashingEmbedder` changes a text into a vector.
+
+```mermaid
+flowchart LR
+    T[/"Chunk title and text,<br/>or a query variant"/] --> TOK["content_tokens:<br/>lower case, no stopwords"]
+    TOK --> ST["stem: light suffix stripper"]
+    ST --> F1["Words, weight 1.0"]
+    ST --> F2["Word bigrams, weight 0.7"]
+    ST --> F3["Character trigrams, weight 0.3"]
+    F1 --> H["crc32 of each feature:<br/>bucket h mod 1024, sign from bit 31"]
+    F2 --> H
+    F3 --> H
+    H --> L2[/"L2-normalised vector,<br/>1024 dimensions"/]
+```
 
 The bundled corpus has 14 documents and gives 28 chunks with the default settings.
 
@@ -339,6 +568,26 @@ The bundled corpus has 14 documents and gives 28 chunks with the default setting
 ### 7.1 Hybrid retrieval
 
 **Purpose.** Get the chunks that answer a message, also when the message uses everyday words.
+
+```mermaid
+flowchart TD
+    Q[/"Message and k"/] --> MODE{"Retriever mode"}
+    MODE -- "hybrid" --> RR["RuleRewriter: the message, content words,<br/>content words plus EXPANSIONS, max 3"]
+    MODE -- "dense or lexical" --> SQ["SingleQuery: the message only"]
+    RR --> VARS["Query variants"]
+    SQ --> VARS
+    VARS -- "dense or hybrid" --> DEN["Embed each variant,<br/>DenseIndex.search, depth 20"]
+    VARS -- "lexical or hybrid" --> BM["BM25.search for each variant,<br/>depth 20, k1 1.5, b 0.75"]
+    DEN --> LISTS["Ranked lists,<br/>empty lists removed"]
+    BM --> LISTS
+    LISTS --> RRF["reciprocal_rank_fusion:<br/>score = sum of 1 / (60 + rank)"]
+    RRF --> DOC{"Next chunk: its document<br/>already has 1 chunk?"}
+    DOC -- "yes, skip it" --> DOC
+    DOC -- "no" --> KEEP["Keep the chunk"]
+    KEEP --> K{"k chunks kept?"}
+    K -- "no" --> DOC
+    K -- "yes" --> OUT[/"Retrieved: chunk, RRF score, variants"/]
+```
 
 | Input | Output |
 |---|---|
@@ -364,6 +613,22 @@ The bundled corpus has 14 documents and gives 28 chunks with the default setting
 
 **Purpose.** Write a short reply from the sources only, with a citation for each fact.
 
+```mermaid
+flowchart TD
+    IN[/"Message, retrieved chunks, history"/] --> GEN{"CALMVOICE_LLM"}
+    GEN -- "ollama" --> LLMG["LLMGenerator: SYSTEM_POLICY,<br/>numbered sources, message, history"]
+    LLMG --> OLL["OllamaLLM: POST /api/chat,<br/>temperature 0.2"]
+    OLL --> ERR{"LLMError?<br/>no server, timeout, empty reply"}
+    ERR -- "yes" --> EXT
+    ERR -- "no" --> RAW["Draft text"]
+    GEN -- "offline" --> EXT["ExtractiveGenerator: topic opening,<br/>3 best source sentences with citations,<br/>closing referral"]
+    EXT --> RAW
+    RAW --> G1{"guard_output: diagnosis claim<br/>or medication advice?"}
+    G1 -- "yes" --> BL[/"SAFE_FALLBACK text,<br/>route blocked, no sources"/]
+    G1 -- "no" --> CIT["Remove each citation<br/>that points to no source"]
+    CIT --> ANS[/"Checked text, route answer,<br/>sources with licences"/]
+```
+
 | Input | Output |
 |---|---|
 | Message, retrieved chunks, history | Checked reply text and the guard result |
@@ -387,6 +652,25 @@ The bundled corpus has 14 documents and gives 28 chunks with the default setting
 
 **Purpose.** Let the user speak and listen in the browser, and keep context only when the user asks.
 
+```mermaid
+flowchart TD
+    RUN["One script run of the page"] --> SS{"Companion in<br/>st.session_state?"}
+    SS -- "no" --> BUILD["build_companion once,<br/>SessionMemory in st.session_state"]
+    SS -- "yes" --> REUSE["Reuse the companion,<br/>no new embedding"]
+    BUILD --> TOG["Sidebar: toggle sets memory.enabled,<br/>button clears the history"]
+    REUSE --> TOG
+    TOG --> VX{"WhisperSTT and gTTS<br/>available, extra voice?"}
+    VX -- "yes" --> MIC["st.audio_input records audio,<br/>WhisperSTT.transcribe"]
+    VX -- "no" --> NOMIC["No microphone widget,<br/>ToneTTS for the audio"]
+    TYPED[/"st.chat_input"/] --> MSG["Message"]
+    MIC --> MSG
+    NOMIC --> TYPED
+    MSG --> RESP["companion.respond"]
+    RESP --> SHOW["Show the turns,<br/>a crisis reply as an error box"]
+    SHOW --> TTS["GTTSTextToSpeech MP3 or<br/>ToneTTS WAV of the last reply"]
+    TTS --> PLAY[/"st.audio plays the bytes<br/>in the browser"/]
+```
+
 | Adapter | Class | Package |
 |---|---|---|
 | Speech-to-text | `WhisperSTT` | `faster-whisper` (extra `voice`) |
@@ -397,7 +681,7 @@ The bundled corpus has 14 documents and gives 28 chunks with the default setting
 **Procedure**
 
 1. The Streamlit page records audio in the browser with `st.audio_input`.
-2. `voice_turn` transcribes the bytes, gets the reply and synthesizes audio bytes.
+2. The page transcribes the bytes with the STT adapter, gets the reply and synthesizes audio bytes. `voice_turn` does the same three steps in one call.
 3. The page plays the bytes in the browser with `st.audio`.
 
 **Rules**
@@ -409,6 +693,26 @@ The bundled corpus has 14 documents and gives 28 chunks with the default setting
 ---
 
 ## 8. The decision rules
+
+The diagram shows how the companion chooses the route and the reply text.
+
+```mermaid
+flowchart TD
+    M[/"Message"/] --> E{"Empty?"}
+    E -- "yes" --> R0[/"empty: please type or say a message"/]
+    E -- "no" --> C{"Risk level crisis?"}
+    C -- "yes" --> R1[/"crisis: escalation message,<br/>no sources"/]
+    C -- "no" --> S{"check_scope:<br/>medication first, then diagnosis"}
+    S -- "out of scope" --> R2["out_of_scope: SCOPE_REPLIES text"]
+    S -- "in scope" --> G{"Output guard passes?"}
+    G -- "no" --> R3["blocked: SAFE_FALLBACK,<br/>no sources"]
+    G -- "yes" --> R4["answer: checked text<br/>and sources with licences"]
+    R2 --> CC{"Risk level concern?"}
+    R3 --> CC
+    R4 --> CC
+    CC -- "yes" --> ADD[/"CONCERN_PREFIX, the text,<br/>then the crisis lines"/]
+    CC -- "no" --> PLAIN[/"The text only"/]
+```
 
 **Risk levels**
 
@@ -509,6 +813,24 @@ pip install -e ".[ui,voice]"
 streamlit run src/calmvoice/app/streamlit_app.py
 ```
 
+The diagram shows the order of the commands and the files that connect them.
+
+```mermaid
+flowchart LR
+    INS["pip install -e .[dev]"] --> BI["calmvoice build-index"]
+    BI --> IDX[("indexes/default")]
+    INS -- "builds the index if absent" --> ASK["ask, chat"]
+    IDX --> ASK
+    IDX --> PAGE["streamlit run<br/>streamlit_app.py"]
+    INS --> RT["calmvoice redteam --out"]
+    RT --> RTF[("data/redteam.jsonl")]
+    RTF -- "--redteam" --> ES["eval-safety"]
+    INS -- "set made in memory" --> ES
+    INS --> ER["eval-retrieval, eval-answers<br/>index built in memory"]
+    INS --> VC["validate-corpus, resources"]
+    OLL["ollama pull llama3.2"] -. "CALMVOICE_LLM=ollama" .-> ASK
+```
+
 ### 10.4 Environment variables
 
 | Variable | Used by | Meaning |
@@ -522,9 +844,22 @@ streamlit run src/calmvoice/app/streamlit_app.py
 | `CALMVOICE_INDEX_DIR` | index | Index folder, default `indexes/default` |
 | `CALMVOICE_TOP_K` | companion | Number of chunks, default 4 |
 | `CALMVOICE_REGION` | crisis lines | Region code, default `US` |
-| `CALMVOICE_MEMORY` | session memory | `1` turns memory on for the CLI. Default off |
+| `CALMVOICE_MEMORY` | session memory | `1`, `true`, `yes` or `on` turns memory on in `build_companion`. Default off. `calmvoice chat` uses only `--memory`, and the Streamlit page uses its sidebar toggle |
 
 calmvoice needs no API key. Local settings are only in a `.env` file. Git ignores this file. Do not commit it.
+
+```mermaid
+flowchart LR
+    DOT[/".env file"/] --> LD["load_dotenv: sets only absent<br/>variables, skips empty values"]
+    PENV[/"Process environment"/] --> FE["Settings.from_env"]
+    LD --> FE
+    FE --> CHK{"TEMPERATURE 0 to 1,<br/>TOP_K 1 or more,<br/>LLM offline or ollama,<br/>EMBEDDER hashing or minilm?"}
+    CHK -- "no" --> ERR[/"ValueError"/]
+    CHK -- "yes" --> SET["Settings"]
+    FLAGS[/"CLI flags: --corpus, --index-dir,<br/>--embedder, --llm, --region"/] --> REP["dataclasses.replace"]
+    SET --> REP
+    REP --> BC[/"build_companion"/]
+```
 
 ---
 
